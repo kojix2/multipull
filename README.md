@@ -1,5 +1,7 @@
 # multipull
 
+[![Gem Version](https://badge.fury.io/rb/multipull.svg)](https://badge.fury.io/rb/multipull)
+
 Ruby implementation of multipull
 
 ## installation
