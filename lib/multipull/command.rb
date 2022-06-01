@@ -8,7 +8,8 @@ module Multipull
     include TerminalColor
 
     def initialize
-      @dir = nil
+      # @options = {}
+      @dirs = []
     end
 
     def run
@@ -20,7 +21,7 @@ module Multipull
 
     def parse_options
       OptionParser.new do |opts|
-        opts.banner = 'Usage: multipull [options] [dir]'
+        opts.banner = 'Usage: multipull [options] [dir...]'
 
         opts.on('-v', '--version', 'Show version') do
           puts VERSION
@@ -33,14 +34,28 @@ module Multipull
         end
       end.parse!
 
-      @dir = ARGV.shift || '.'
+      @dirs = ARGV.empty? ? ['.'] : ARGV
     end
 
-    def main
-      Dir.chdir(@dir) do
-        Dir.glob('*/').each do |dir|
-          puts blue(bold(dir))
-          system("git -C #{dir} pull")
+    def start_banner(dirs)
+      targets = blue(dirs.join(' '))
+      puts bold("multipull: #{targets}")
+    end
+
+    def main(dirs = @dirs)
+      start_banner(dirs)
+      dirs.each do |dir|
+        unless File.directory?(dir)
+          puts magenta("#{dir} is not a directory")
+          next
+        end
+        Dir.chdir(dir) do
+          Dir.glob('*/').each do |subdir|
+            puts blue(bold(subdir))
+            Dir.chdir(subdir) do
+              system('git pull')
+            end
+          end
         end
       end
     end

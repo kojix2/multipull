@@ -13,5 +13,13 @@ module Multipull
     def blue(s)
       "\e[34m#{s}\e[0m"
     end
+
+    def magenta(s)
+      "\033[35m#{s}\033[0m"
+    end
+
+    def red(s)
+      "\033[31m#{s}\033[0m"
+    end
   end
 end
