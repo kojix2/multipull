@@ -4,10 +4,17 @@
 
 Ruby implementation of multipull
 
-## installation
+## Installation
 
 ```sh
 gem install multipull
+```
+
+## Usage
+
+```
+multipull
+multipull ~/Ruby
 ```
 
 ## What is this?
