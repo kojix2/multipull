@@ -10,6 +10,7 @@ module Multipull
     def initialize
       # @options = {}
       @dirs = []
+      @git_opts = []
     end
 
     def run
@@ -20,19 +21,25 @@ module Multipull
     private
 
     def parse_options
-      OptionParser.new do |opts|
-        opts.banner = 'Usage: multipull [options] [dir...]'
+      opts = OptionParser.new
+      opts.banner = 'Usage: multipull [options] [dir...]'
 
-        opts.on('-v', '--version', 'Show version') do
-          puts VERSION
-          exit
-        end
+      opts.on('--version', 'Show version') do
+        puts VERSION
+        exit
+      end
 
-        opts.on('-h', '--help', 'Show help') do
-          puts opts
-          exit
-        end
-      end.parse!
+      opts.on('--help', 'Show help') do
+        puts opts
+        exit
+      end
+
+      begin
+        opts.parse!
+      rescue OptionParser::InvalidOption => e
+        @git_opts += e.args
+        retry
+      end
 
       @dirs = ARGV.empty? ? ['.'] : ARGV
     end
@@ -53,7 +60,7 @@ module Multipull
           Dir.glob('*/').each do |subdir|
             puts blue(bold(subdir))
             Dir.chdir(subdir) do
-              system('git pull')
+              system("git pull #{@git_opts.join(' ')}")
             end
           end
         end
