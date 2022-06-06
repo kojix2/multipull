@@ -6,6 +6,10 @@ module Multipull
       "\e[1m#{s}\e[22m"
     end
 
+    def green(s)
+      "\e[32m#{s}\e[0m"
+    end
+
     def cyan(s)
       "\e[36m#{s}\e[0m"
     end

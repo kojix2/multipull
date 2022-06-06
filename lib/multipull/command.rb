@@ -56,14 +56,24 @@ module Multipull
           puts magenta("#{dir} is not a directory")
           next
         end
+
+        succeeded = []
+        failed = []
         Dir.chdir(dir) do
           Dir.glob('*/').each do |subdir|
-            puts blue(bold(subdir))
             Dir.chdir(subdir) do
-              system("git pull #{@git_opts.join(' ')}")
+              dirname = subdir.delete_suffix('/')
+              puts blue(bold(dirname))
+              if system("git pull #{@git_opts.join(' ')}")
+                succeeded << dirname
+              else
+                failed << dirname
+              end
             end
           end
         end
+        warn bold(green('Succeeded : ')) + succeeded.join(' ')
+        warn bold(magenta('Failed : ')) + failed.join(' ')
       end
     end
   end
