@@ -57,13 +57,19 @@ module Multipull
           next
         end
 
+        skipped = []
         succeeded = []
-        failed = []
+        failed    = []
         Dir.chdir(dir) do
           Dir.glob('*/').each do |subdir|
             Dir.chdir(subdir) do
               dirname = subdir.delete_suffix('/')
-              puts blue(bold(dirname))
+              if File.directory?('.git')
+                puts blue(bold(dirname))
+              else
+                skipped << dirname
+                next
+              end
               if system("git pull #{@git_opts.join(' ')}")
                 succeeded << dirname
               else
@@ -72,6 +78,7 @@ module Multipull
             end
           end
         end
+        warn bold('Skipped : ') + skipped.join(' ')
         warn bold(green('Succeeded : ')) + succeeded.join(' ')
         warn bold(magenta('Failed : ')) + failed.join(' ')
       end
