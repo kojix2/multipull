@@ -25,7 +25,7 @@ module Multipull
       opts.banner = 'Usage: multipull [options] [dir...]'
 
       opts.on('--version', 'Show version') do
-        puts VERSION
+        puts "multipull #{VERSION}"
         exit
       end
 
