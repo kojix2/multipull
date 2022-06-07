@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 str = `git pull -h`
 
 ary = str.split("\n")
-         .map { |l| l.strip }
+         .map(&:strip)
          .filter { |l| l.start_with?('-') }
 
 def has_short_option?(line)
