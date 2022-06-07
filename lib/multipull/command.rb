@@ -78,9 +78,18 @@ module Multipull
             end
           end
         end
-        warn bold('Skipped : ') + skipped.join(' ')
-        warn bold(green('Succeeded : ')) + succeeded.join(' ')
-        warn bold(magenta('Failed : ')) + failed.join(' ')
+        unless skipped.empty?
+          warn \
+            bold('Skipped : ') + skipped.join(' ')
+        end
+        unless succeeded.empty?
+          warn \
+            bold(green('Succeeded : ')) + succeeded.join(' ')
+        end
+        unless failed.empty?
+          warn \
+            bold(magenta('Failed : ')) + failed.join(' ')
+        end
       end
     end
   end
