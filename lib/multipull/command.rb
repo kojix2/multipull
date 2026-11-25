@@ -95,11 +95,11 @@ module Multipull
           warn \
             bold(green('Succeeded : ')) + succeeded.join(' ')
         end
-        unless failed.empty?
-          @success = false
-          warn \
-            bold(magenta('Failed : ')) + failed.join(' ')
-        end
+        next if failed.empty?
+
+        @success = false
+        warn \
+          bold(magenta('Failed : ')) + failed.join(' ')
       end
     end
 

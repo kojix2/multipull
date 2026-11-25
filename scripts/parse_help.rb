@@ -11,7 +11,7 @@ def has_short_option?(line)
 end
 
 def has_long_option?(line)
-  line.match(/--[a-z\-]+/)&.[](0)
+  line.match(/--[a-z-]+/)&.[](0)
 end
 
 def has_required_argument?(line)
