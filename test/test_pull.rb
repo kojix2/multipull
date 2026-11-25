@@ -3,7 +3,7 @@
 require_relative 'test_helper'
 
 # Runs exe/multipull against real git repositories created in a temporary directory.
-class TestPull < Minitest::Test
+class TestPull < Test::Unit::TestCase
   include MultipullTestHelper
 
   def setup
@@ -39,8 +39,8 @@ class TestPull < Minitest::Test
     assert status.success?, err
     assert_equal @latest, head('a')
     assert_equal @latest, head('b')
-    assert_includes err, 'Skipped : notrepo'
-    assert_includes err, 'Succeeded : a b'
+    assert_include err, 'Skipped : notrepo'
+    assert_include err, 'Succeeded : a b'
   end
 
   def test_pulls_in_parallel
@@ -49,7 +49,7 @@ class TestPull < Minitest::Test
     assert status.success?, err
     assert_equal @latest, head('a')
     assert_equal @latest, head('b')
-    assert_includes err, 'Succeeded : a b'
+    assert_include err, 'Succeeded : a b'
   end
 
   def test_pulls_worktree_whose_dot_git_is_a_file
@@ -60,7 +60,7 @@ class TestPull < Minitest::Test
 
     assert status.success?, err
     assert_equal @latest, head('wt')
-    assert_includes err, 'Succeeded : a b wt'
+    assert_include err, 'Succeeded : a b wt'
   end
 
   def test_exits_with_failure_when_a_pull_fails
@@ -70,8 +70,8 @@ class TestPull < Minitest::Test
       _out, err, status = run_multipull(*opts, 'ws', chdir: @tmp)
 
       assert_equal 1, status.exitstatus
-      assert_includes err, 'Succeeded : a'
-      assert_includes err, 'Failed : b'
+      assert_include err, 'Succeeded : a'
+      assert_include err, 'Failed : b'
     end
   end
 
@@ -79,7 +79,7 @@ class TestPull < Minitest::Test
     out, _err, status = run_multipull('nosuchdir', chdir: @tmp)
 
     assert_equal 1, status.exitstatus
-    assert_includes out, 'nosuchdir is not a directory'
+    assert_include out, 'nosuchdir is not a directory'
   end
 
   def test_git_arguments_are_not_interpreted_by_shell

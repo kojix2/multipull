@@ -4,7 +4,7 @@ require_relative 'test_helper'
 
 # Uses a fake git that writes output slowly, so that output from concurrently
 # running pulls would interleave if it were not buffered.
-class TestParallelOutput < Minitest::Test
+class TestParallelOutput < Test::Unit::TestCase
   include MultipullTestHelper
 
   FAKE_GIT = <<~SH
@@ -52,8 +52,8 @@ class TestParallelOutput < Minitest::Test
     out, err, status = run_multipull('-P', '3', 'ws', chdir: @tmp, env: @env)
 
     assert_equal 1, status.exitstatus
-    assert_includes err, 'Succeeded : r1 r2 r3 r4 r5'
-    assert_includes err, 'Failed : fail1'
+    assert_include err, 'Succeeded : r1 r2 r3 r4 r5'
+    assert_include err, 'Failed : fail1'
     assert_operator File.readlines(@concurrency_log).map(&:to_i).max, :>, 1, 'pulls did not run concurrently'
 
     blocks = out.lines(chomp: true).drop(1).each_slice(4).to_a

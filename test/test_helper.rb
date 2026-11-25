@@ -6,8 +6,9 @@ require 'multipull'
 require 'fileutils'
 require 'open3'
 require 'rbconfig'
+require 'stringio'
 require 'tmpdir'
-require 'minitest/autorun'
+require 'test/unit'
 
 module MultipullTestHelper
   EXE = File.expand_path('../exe/multipull', __dir__)

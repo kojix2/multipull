@@ -2,7 +2,7 @@
 
 require_relative 'test_helper'
 
-class TestOptions < Minitest::Test
+class TestOptions < Test::Unit::TestCase
   def parse(*argv)
     cmd = Multipull::Command.new
     cmd.send(:parse_options, argv)
@@ -14,11 +14,13 @@ class TestOptions < Minitest::Test
   end
 
   def assert_exits_with_error(*argv)
-    _out, err = capture_io do
-      e = assert_raises(SystemExit) { parse(*argv) }
-      assert_equal 1, e.status
-    end
-    assert_match(/\Amultipull: /, err)
+    stderr = $stderr
+    $stderr = StringIO.new
+    e = assert_raise(SystemExit) { parse(*argv) }
+    assert_equal 1, e.status
+    assert_match(/\Amultipull: /, $stderr.string)
+  ensure
+    $stderr = stderr
   end
 
   def test_defaults
