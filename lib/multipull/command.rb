@@ -64,7 +64,7 @@ module Multipull
           Dir.glob('*/').each do |subdir|
             Dir.chdir(subdir) do
               dirname = subdir.delete_suffix('/')
-              if File.directory?('.git')
+              if File.exist?('.git')
                 puts blue(bold(dirname))
               else
                 skipped << dirname
