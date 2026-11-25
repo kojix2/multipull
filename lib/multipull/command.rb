@@ -70,7 +70,7 @@ module Multipull
                 skipped << dirname
                 next
               end
-              if system("git pull #{@git_opts.join(' ')}")
+              if system('git', 'pull', *@git_opts)
                 succeeded << dirname
               else
                 failed << dirname
