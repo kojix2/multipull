@@ -142,8 +142,8 @@ module Multipull
       # A new session prevents configured SSH commands from reading /dev/tty,
       # while preserving their identity files, ports, and other options.
       Open3.popen2e(non_interactive_env(path), RbConfig.ruby, '-e',
-                   'Process.setsid if Process.respond_to?(:setsid); exec(*ARGV)',
-                   '--', 'git', 'pull', *@git_opts, chdir: path) do |stdin, output, child|
+                    'Process.setsid if Process.respond_to?(:setsid); exec(*ARGV)',
+                    '--', 'git', 'pull', *@git_opts, chdir: path) do |stdin, output, child|
         stdin.close
         begin
           [output.read, child.value.success?]
