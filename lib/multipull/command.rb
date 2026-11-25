@@ -11,11 +11,13 @@ module Multipull
       # @options = {}
       @dirs = []
       @git_opts = []
+      @success = true
     end
 
     def run
       parse_options
       main
+      exit(1) unless @success
     end
 
     private
@@ -54,6 +56,7 @@ module Multipull
       dirs.each do |dir|
         unless File.directory?(dir)
           puts magenta("#{dir} is not a directory")
+          @success = false
           next
         end
 
@@ -87,6 +90,7 @@ module Multipull
             bold(green('Succeeded : ')) + succeeded.join(' ')
         end
         unless failed.empty?
+          @success = false
           warn \
             bold(magenta('Failed : ')) + failed.join(' ')
         end
