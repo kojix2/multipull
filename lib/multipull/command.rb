@@ -2,6 +2,7 @@
 
 require 'open3'
 require 'optparse'
+require 'rbconfig'
 require_relative 'terminal_color'
 
 module Multipull
@@ -138,17 +139,43 @@ module Multipull
     end
 
     def capture_pull(path)
-      output, status = Open3.capture2e(non_interactive_env(path), 'git', 'pull', *@git_opts,
-                                       chdir: path, stdin_data: '')
-      [output, status.success?]
+      # A new session prevents configured SSH commands from reading /dev/tty,
+      # while preserving their identity files, ports, and other options.
+      Open3.popen2e(non_interactive_env(path), RbConfig.ruby, '-e',
+                   'Process.setsid if Process.respond_to?(:setsid); exec(*ARGV)',
+                   '--', 'git', 'pull', *@git_opts, chdir: path) do |stdin, output, child|
+        stdin.close
+        begin
+          [output.read, child.value.success?]
+        ensure
+          # Detached children do not receive the parent's terminal signals.
+          stop_pull(child.pid) if child.alive?
+        end
+      end
     rescue SystemCallError => e
       ["#{e.message}\n", false]
+    end
+
+    def stop_pull(pid)
+      targets = Process.respond_to?(:setsid) ? [-pid, pid] : [pid]
+      targets.each do |target|
+        Process.kill('KILL', target)
+        break
+      rescue Errno::ESRCH
+        # The child may exit, or not have created its session yet.
+        next
+      end
     end
 
     # Prompts cannot be answered while running in parallel, so make git and ssh
     # fail instead of waiting for input.
     def non_interactive_env(path)
-      env = { 'GIT_TERMINAL_PROMPT' => '0' }
+      env = {
+        'GIT_TERMINAL_PROMPT' => '0',
+        'GIT_ASKPASS' => '',
+        'SSH_ASKPASS' => '',
+        'SSH_ASKPASS_REQUIRE' => 'never'
+      }
       unless ENV['GIT_SSH_COMMAND'] || ENV['GIT_SSH'] || ssh_command_configured?(path)
         env['GIT_SSH_COMMAND'] = 'ssh -o BatchMode=yes'
       end
