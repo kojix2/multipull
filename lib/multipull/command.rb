@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'open3'
 require 'optparse'
 require_relative 'terminal_color'
 
@@ -11,6 +12,7 @@ module Multipull
       # @options = {}
       @dirs = []
       @git_opts = []
+      @jobs = 1
       @success = true
     end
 
@@ -27,6 +29,12 @@ module Multipull
       opts.banner = 'Usage: multipull [options] [dir...] [-- git-pull-options...]'
       # Prevent abbreviations like -v from being expanded to --version
       opts.require_exact = true
+
+      opts.on('-P', '--parallel N', Integer, 'Number of repositories to pull in parallel (default: 1)') do |n|
+        raise OptionParser::InvalidArgument, n.to_s if n < 1
+
+        @jobs = n
+      end
 
       opts.on('--version', 'Show version') do
         puts "multipull #{VERSION}"
@@ -50,6 +58,9 @@ module Multipull
       rescue OptionParser::InvalidOption => e
         @git_opts += e.args
         retry
+      rescue OptionParser::ParseError => e
+        warn "multipull: #{e.message}"
+        exit 1
       end
 
       @git_opts += passthrough
@@ -70,27 +81,12 @@ module Multipull
           next
         end
 
-        skipped = []
-        succeeded = []
-        failed    = []
-        Dir.chdir(dir) do
-          Dir.glob('*/').each do |subdir|
-            Dir.chdir(subdir) do
-              dirname = subdir.delete_suffix('/')
-              if File.exist?('.git')
-                puts blue(bold(dirname))
-              else
-                skipped << dirname
-                next
-              end
-              if system('git', 'pull', *@git_opts)
-                succeeded << dirname
-              else
-                failed << dirname
-              end
-            end
-          end
-        end
+        repos, skipped = Dir.glob('*/', base: dir)
+                            .map { |subdir| subdir.delete_suffix('/') }
+                            .partition { |name| File.exist?(File.join(dir, name, '.git')) }
+        results = @jobs > 1 ? pull_parallel(dir, repos) : pull_sequential(dir, repos)
+        succeeded, failed = repos.partition { |name| results[name] }
+
         unless skipped.empty?
           warn \
             bold('Skipped : ') + skipped.join(' ')
@@ -105,6 +101,65 @@ module Multipull
             bold(magenta('Failed : ')) + failed.join(' ')
         end
       end
+    end
+
+    def pull_sequential(dir, repos)
+      repos.to_h do |name|
+        puts blue(bold(name))
+        [name, system('git', 'pull', *@git_opts, chdir: File.join(dir, name)) == true]
+      end
+    end
+
+    # Each repository's output is buffered and printed as a single block
+    # when it finishes, so that output from different repositories never interleaves.
+    def pull_parallel(dir, repos)
+      queue = Queue.new
+      repos.each { |name| queue << name }
+      queue.close
+      results = {}
+      mutex = Mutex.new
+
+      workers = Array.new([@jobs, repos.size].min) do
+        Thread.new do
+          while (name = queue.pop)
+            output, ok = capture_pull(File.join(dir, name))
+            mutex.synchronize do
+              results[name] = ok
+              puts blue(bold(name))
+              print output
+              puts unless output.empty? || output.end_with?("\n")
+              $stdout.flush
+            end
+          end
+        end
+      end
+      workers.each(&:join)
+      results
+    end
+
+    def capture_pull(path)
+      output, status = Open3.capture2e(non_interactive_env(path), 'git', 'pull', *@git_opts,
+                                       chdir: path, stdin_data: '')
+      [output, status.success?]
+    rescue SystemCallError => e
+      ["#{e.message}\n", false]
+    end
+
+    # Prompts cannot be answered while running in parallel, so make git and ssh
+    # fail instead of waiting for input.
+    def non_interactive_env(path)
+      env = { 'GIT_TERMINAL_PROMPT' => '0' }
+      unless ENV['GIT_SSH_COMMAND'] || ENV['GIT_SSH'] || ssh_command_configured?(path)
+        env['GIT_SSH_COMMAND'] = 'ssh -o BatchMode=yes'
+      end
+      env
+    end
+
+    def ssh_command_configured?(path)
+      _output, status = Open3.capture2e('git', 'config', '--get', 'core.sshCommand', chdir: path)
+      status.success?
+    rescue SystemCallError
+      false
     end
   end
 end

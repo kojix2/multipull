@@ -27,6 +27,12 @@ multipull ~/Ruby -- --ff-only
 multipull ~/Ruby -- -X ours
 ```
 
+Use `-P N` to pull N repositories in parallel. The output of each repository is shown as a block when it finishes, so the output does not get mixed up. Since prompts cannot be answered in parallel mode, repositories that require entering a password are treated as failed.
+
+```sh
+multipull -P 8 ~/Ruby
+```
+
 ## What is this?
 
 The name of the command multipull was borrowed from the following article.
