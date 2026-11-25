@@ -22,28 +22,38 @@ module Multipull
 
     private
 
-    def parse_options
+    def parse_options(argv = ARGV)
       opts = OptionParser.new
-      opts.banner = 'Usage: multipull [options] [dir...]'
+      opts.banner = 'Usage: multipull [options] [dir...] [-- git-pull-options...]'
+      # Prevent abbreviations like -v from being expanded to --version
+      opts.require_exact = true
 
       opts.on('--version', 'Show version') do
         puts "multipull #{VERSION}"
         exit
       end
 
-      opts.on('--help', 'Show help') do
+      opts.on('-h', '--help', 'Show help') do
         puts opts
         exit
       end
 
+      args = argv.dup
+      passthrough = []
+      if (i = args.index('--'))
+        passthrough = args[(i + 1)..]
+        args = args[0...i]
+      end
+
       begin
-        opts.parse!
+        opts.parse!(args)
       rescue OptionParser::InvalidOption => e
         @git_opts += e.args
         retry
       end
 
-      @dirs = ARGV.empty? ? ['.'] : ARGV
+      @git_opts += passthrough
+      @dirs = args.empty? ? ['.'] : args
     end
 
     def start_banner(dirs)

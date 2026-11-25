@@ -20,6 +20,13 @@ multipull
 multipull ~/Ruby # directory
 ```
 
+Options after `--` are passed to `git pull` as is.
+
+```sh
+multipull ~/Ruby -- --ff-only
+multipull ~/Ruby -- -X ours
+```
+
 ## What is this?
 
 The name of the command multipull was borrowed from the following article.
